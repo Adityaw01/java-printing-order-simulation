@@ -3,7 +3,7 @@
 Proyek ini adalah simulasi manajemen antrean percetakan menggunakan arsitektur MVC.
 
 ## Teknologi
-* Backend: Java 17 / Spring Boot
+* Backend: Java 26 / Spring Boot
 * Frontend: HTML, CSS, Vanilla JavaScript (Fetch API)
 * Database: In-Memory (HashMap)
 
