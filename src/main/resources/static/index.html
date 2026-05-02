@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Antrean Percetakan</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #0056b3; color: white; }
+        button { padding: 8px 12px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background-color: #218838; }
+        .btn-proses { background-color: #ffc107; color: black; }
+        input[type="text"] { padding: 8px; width: 60%; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Simulasi Manajemen Pesanan Percetakan</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="namaPelanggan" placeholder="Masukkan Nama Pelanggan">
+        <button onclick="buatPesanan()">+ Buat Pesanan</button>
+    </div>
+
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID Pesanan</th>
+                <th>Nama Pelanggan</th>
+                <th>Status</th>
+                <th>Aksi Sistem</th>
+            </tr>
+        </thead>
+        <tbody id="tabelPesanan">
+            <!-- Baris data JSON akan dirender di sini oleh JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = '/api/pesanan';
+
+    // Fungsi PUT: Menambahkan layanan spesifik
+    async function tambahLayanan(id) {
+        const layanan = prompt("Masukkan jenis layanan (contoh: Jilid Hardcover, Print Warna):");
+        if (layanan) {
+            await fetch(`${API_URL}/${id}/tambah-layanan?layanan=${layanan}`, { method: 'PUT' });
+            muatData(); // Refresh tabel untuk melihat perubahannya
+        }
+    }
+
+    /// Fungsi GET: Mengambil data dari backend
+    async function muatData() {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        const tbody = document.getElementById('tabelPesanan');
+        tbody.innerHTML = '';
+
+        data.forEach(pesanan => {
+            const tr = document.createElement('tr');
+            
+            // HARUS ADA 4 <td> SESUAI URUTAN HEADER TABEL
+            tr.innerHTML = `
+                <td><strong>${pesanan.idPesanan}</strong></td>
+                <td>${pesanan.namaPelanggan}</td>
+                <td>${pesanan.status}</td>
+                <td>
+                    <button style="background-color: #28a745; color: white;" 
+                            onclick="tambahLayanan('${pesanan.idPesanan}')" 
+                            ${pesanan.status !== 'ANTREAN' ? 'disabled' : ''}>
+                        + Layanan
+                    </button>
+                    <button class="btn-proses" 
+                            onclick="prosesPesanan('${pesanan.idPesanan}')" 
+                            ${pesanan.status !== 'ANTREAN' ? 'disabled' : ''}>
+                        Eksekusi
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Fungsi POST: Mengirim data ke backend
+    async function buatPesanan() {
+        const nama = document.getElementById('namaPelanggan').value;
+        if (!nama) return alert('Nama pelanggan tidak boleh kosong!');
+        
+        await fetch(`${API_URL}/buat?nama=${nama}`, { method: 'POST' });
+        document.getElementById('namaPelanggan').value = '';
+        muatData(); // Refresh tabel setelah input
+    }
+
+    
+    // Fungsi PUT: Memperbarui status pesanan dengan pengecekan error
+    async function prosesPesanan(id) {
+        const response = await fetch(`${API_URL}/${id}/proses`, { method: 'PUT' });
+        
+        // Jika status HTTP bukan 200 OK (berarti Java melempar Exception)
+        if (!response.ok) {
+            alert("Sistem Menolak: Anda belum menambahkan detail layanan pada pesanan ini! Silakan tambah layanan terlebih dahulu.");
+            return;
+        }
+        
+        muatData(); // Refresh tabel jika sukses
+    }
+
+    // Eksekusi otomatis saat halaman web dibuka
+    window.onload = muatData;
+</script>
+
+</body>
+</html>
